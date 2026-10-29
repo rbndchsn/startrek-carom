@@ -50,14 +50,14 @@ export function createShotTracker(bumpers, shooter) {
   };
 }
 
-// Section 4. Any ball touching a bumper during the shot lights or steals it for the shooter.
+// Section 4. Only the shooter's own terik lights or steals a bumper. Obstacle balls (and the
+// opponent's terik) bounce off bumpers without changing them.
 // Returns { index, from, to } if the bumper changed, else null.
 export function onBumperHit(t, ballId, index) {
   if (t.win || t.scratch) return null;
-  if (ballId === terikId(t.shooter)) {
-    t.terikTouchedBumper = true;
-    t.lastTerikBumper = index;
-  }
+  if (ballId !== terikId(t.shooter)) return null;
+  t.terikTouchedBumper = true;
+  t.lastTerikBumper = index;
   const from = t.bumpers[index];
   if (from === t.shooter) return null;
   t.bumpers[index] = t.shooter;

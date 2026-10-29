@@ -102,7 +102,11 @@ export class Game {
   update(dt) {
     this.time += dt;
     if (this.phase === 'shooting') this.stepPhysics(dt);
-    if (this.world) this.ballViews.sync(this.world, dt);
+    if (this.world) {
+      // Your terik pulses while it waits for you to take the shot.
+      this.ballViews.setHighlight(terikId(HUMAN), this.phase === 'aim' && !this.input.isAiming());
+      this.ballViews.sync(this.world, dt);
+    }
     this.table.update(dt, this.time);
     this.stick.update(dt);
     this.tweens.update(dt);

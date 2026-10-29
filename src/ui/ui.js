@@ -132,9 +132,9 @@ export function createUI(root, h) {
         <h3>Goal</h3>
         <p>Light the bumpers, take control of the table, then sink your own glowing ball, the <b>terik</b>, in the hole.
         Your terik is <span class="c-human">green</span>. The computer's is <span class="c-computer">blue</span>.
-        The 8 whitish balls are obstacles.</p>
+        The 13 whitish balls are obstacles: they block your path, and they never light bumpers.</p>
         <h3>Bumpers</h3>
-        <p>Any ball your shot sends into a bumper lights it in your color. Hitting an opponent's lit bumper steals it.
+        <p>Only your own terik lights bumpers: when it hits a bumper, the bumper lights in your color. When it hits an opponent's lit bumper, it steals it. Obstacle balls just bounce off.
         Your turn continues as long as each shot lights or steals at least one bumper.</p>
         <h3>The hole</h3>
         <p>The hole opens for you when <b>all 10 bumpers are lit</b>, you own <b>at least 6</b>, and you own the

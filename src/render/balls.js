@@ -9,17 +9,25 @@ const sphere = new THREE.SphereGeometry(R, 32, 24);
 function makeTerik(owner) {
   const color = COLORS[owner];
   const g = new THREE.Group();
-  const core = new THREE.Mesh(sphere, new THREE.MeshStandardMaterial({
-    color, emissive: color, emissiveIntensity: 1.9, roughness: 0.25,
-  }));
+  // Solid glowing color, not tone mapped, so the ball reads as clearly green or blue at any brightness.
+  const core = new THREE.Mesh(sphere, new THREE.MeshBasicMaterial({ color, toneMapped: false }));
   core.castShadow = true;
+  core.userData.base = new THREE.Color(color);
   const shell = new THREE.Mesh(new THREE.SphereGeometry(R * 1.12, 24, 16), new THREE.MeshBasicMaterial({
-    color, transparent: true, opacity: 0.18, blending: THREE.AdditiveBlending, depthWrite: false,
+    color, transparent: true, opacity: 0.18, depthWrite: false, toneMapped: false,
   }));
   const light = new THREE.PointLight(color, 7, 18, 1.3);
   const halo = makeHalo(9, color, 0.6);
   halo.position.y = -R + 0.05;
-  g.add(core, shell, light, halo);
+  // Expanding ring on the felt, used to call attention to the ball whose turn it is.
+  const ripple = new THREE.Mesh(
+    new THREE.RingGeometry(0.85, 1, 48),
+    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, toneMapped: false, depthWrite: false }),
+  );
+  ripple.rotation.x = -Math.PI / 2;
+  ripple.position.y = -R + 0.06;
+  g.add(core, shell, light, halo, ripple);
+  g.userData = { core, shell, light, halo, ripple, highlight: false };
   return g;
 }
 
@@ -40,6 +48,32 @@ function makeObstacle() {
 export function createBallViews(scene) {
   const views = new Map();
   const anims = new Map(); // id -> { kind: 'drop' | 'appear', t, from }
+  let clock = 0;
+
+  // Pulsing glow and ripple on a terik that is waiting to be played.
+  function applyHighlight(v) {
+    const u = v.userData;
+    if (!u || !u.core) return;
+    if (!u.highlight) {
+      u.core.material.color.copy(u.core.userData.base);
+      u.shell.scale.setScalar(1);
+      u.shell.material.opacity = 0.18;
+      u.light.intensity = 7;
+      u.halo.material.opacity = 0.6;
+      u.ripple.material.opacity = 0;
+      return;
+    }
+    const p = 0.5 + 0.5 * Math.sin(clock * 5); // 0..1, a little under once per second
+    // The color brightens and dims but stays green; it never washes out to white.
+    u.core.material.color.copy(u.core.userData.base).multiplyScalar(0.75 + 0.45 * p);
+    u.shell.scale.setScalar(1.2 + 0.5 * p);
+    u.shell.material.opacity = 0.25 + 0.3 * p;
+    u.light.intensity = 8 + 10 * p;
+    u.halo.material.opacity = 0.7 + 0.3 * p;
+    const r = (clock * 0.8) % 1; // ripple grows outward and fades, then restarts
+    u.ripple.scale.setScalar(1.6 + r * 4.5);
+    u.ripple.material.opacity = 0.9 * (1 - r);
+  }
 
   function clear() {
     for (const v of views.values()) scene.remove(v);
@@ -64,6 +98,14 @@ export function createBallViews(scene) {
 
     get(id) { return views.get(id); },
 
+    setHighlight(id, on) {
+      const v = views.get(id);
+      if (v && v.userData && v.userData.highlight !== on) {
+        v.userData.highlight = on;
+        applyHighlight(v);
+      }
+    },
+
     startDrop(id, x, y) {
       anims.set(id, { kind: 'drop', t: 0, from: { x, y } });
     },
@@ -77,6 +119,8 @@ export function createBallViews(scene) {
     },
 
     sync(world, dt) {
+      clock += dt;
+      for (const v of views.values()) if (v.userData && v.userData.highlight) applyHighlight(v);
       for (const b of world.balls) {
         const v = views.get(b.id);
         if (!v) continue;

@@ -5,7 +5,7 @@ import { PhysicsWorld } from '../physics/physics.js';
 import { randomObstaclePositions, nearestFreeSpot } from '../physics/placement.js';
 import { terikId } from './rules.js';
 
-export const OBSTACLE_COUNT = 8;
+export const OBSTACLE_COUNT = 13;
 
 // Returns { world, startPositions } where startPositions maps ball id to {x, y}.
 export function createRoundWorld(rng = Math.random) {
