@@ -89,22 +89,34 @@ export function createUI(root, h) {
   const q = (parent, k) => parent.querySelector(`[data-k="${k}"]`);
   const btn = (a) => bar.querySelector(`[data-a="${a}"]`);
 
-  function modal(contentHtml, buttons, cls = '') {
+  // A card that stays until a button is clicked. With keys on, Enter or Escape picks the main button.
+  function modal(contentHtml, buttons, cls = '', { keys = true } = {}) {
     return new Promise((resolve) => {
       const overlay = el('div', `overlay ${cls}`);
       const card = el('div', 'card');
       card.innerHTML = contentHtml;
       const row = el('div', 'buttons');
+      const close = (value) => {
+        window.removeEventListener('keydown', onKey, true);
+        overlay.remove();
+        resolve(value);
+      };
       for (const b of buttons) {
         const x = el('button', b.cls || '', b.label);
         if (b.disabled) x.disabled = true;
-        x.addEventListener('click', () => {
-          if (b.keepOpen) { resolve(b.value); return; }
-          overlay.remove();
-          resolve(b.value);
-        });
+        x.addEventListener('click', () => close(b.value));
         row.append(x);
       }
+      const main = buttons.find((b) => (b.cls || '').includes('primary')) || buttons[buttons.length - 1];
+      function onKey(e) {
+        if (!keys || root.lastElementChild !== overlay) return; // only the top card reacts
+        if (e.key === 'Enter' || e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+          close(main.value);
+        }
+      }
+      window.addEventListener('keydown', onKey, true);
       card.append(row);
       overlay.append(card);
       root.append(overlay);
@@ -126,7 +138,7 @@ export function createUI(root, h) {
         Your turn continues as long as each shot lights or steals at least one bumper.</p>
         <h3>The hole</h3>
         <p>The hole opens for you when <b>all 10 bumpers are lit</b>, you own <b>at least 6</b>, and you own the
-        <b>gate bumper</b> beside the hole. The hexagon glows in your color. Then bounce your terik off one of your lit
+        <b>gate bumper</b> beside the hole. The hole in the center then glows in your color. Then bounce your terik off one of your lit
         bumpers into the hole to win. Call it: <b>Dom-jot!</b></p>
         <p>If your terik drops into your open hole without touching a bumper first, it goes back to its start spot and your turn ends.</p>
         <h3>Scratch</h3>
@@ -143,6 +155,7 @@ export function createUI(root, h) {
           <li><b>Fine aim:</b> while holding, use the left and right arrow keys. <b>Escape</b> cancels.</li>
           <li><b>Camera:</b> drag empty space to rotate, wheel to zoom, right-drag to slide.</li>
           <li><b>Guide:</b> shows the path to the first thing your shot will hit.</li>
+          <li><b>Sound:</b> turns the music and sound effects on or off.</li>
         </ul>
       </div>`, [{ label: 'Close', value: true, cls: 'primary' }], 'wide');
   }
@@ -270,14 +283,20 @@ export function createUI(root, h) {
       [
         { label: 'Fold', value: false },
         { label: short ? `Call all in (${bank})` : `Call ${amount}`, value: true, cls: 'primary' },
-      ]);
+      ], 'computer', { keys: false });
     },
 
     showResult({ title, lines, primary, secondary, mood }) {
       const buttons = [];
       if (secondary) buttons.push({ label: secondary, value: 'secondary' });
       buttons.push({ label: primary, value: 'primary', cls: 'primary' });
-      return modal(`<h2 class="${mood || ''}">${title}</h2>${lines.map((l) => `<p>${l}</p>`).join('')}`, buttons, 'result');
+      return modal(`<h2 class="${mood || ''}">${title}</h2>${lines.map((l) => `<p>${l}</p>`).join('')}`, buttons, `result ${mood || ''}`);
+    },
+
+    // An important event that waits for the player. mood: 'good', 'bad', 'computer' or ''.
+    eventCard({ title, lines, mood = '', button = 'OK' }) {
+      return modal(`<h2 class="${mood}">${title}</h2>${lines.map((l) => `<p>${l}</p>`).join('')}`,
+        [{ label: button, value: true, cls: 'primary' }], `event ${mood}`);
     },
 
     showHelp,

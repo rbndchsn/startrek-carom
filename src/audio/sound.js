@@ -58,39 +58,32 @@ export function createSound() {
     src.start(t);
   }
 
+  // Background music: media/sounds/game.mp3, streamed and looped.
+  // Browsers only allow audio after the player clicks or presses a key, so it starts on the first one.
   function startAmbience() {
-    if (!enabled || !ensure() || ambience) return;
-    const len = ctx.sampleRate * 2;
-    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-    const d = buf.getChannelData(0);
-    let lastV = 0;
-    for (let i = 0; i < len; i++) {
-      lastV = (lastV + 0.02 * (Math.random() * 2 - 1)) / 1.02; // brown noise
-      d[i] = lastV * 3;
+    if (!enabled) return;
+    if (!ambience) {
+      ambience = new Audio('media/sounds/game.mp3');
+      ambience.loop = true;
+      ambience.preload = 'none';
+      ambience.volume = 0.35;
     }
-    const src = ctx.createBufferSource();
-    src.buffer = buf;
-    src.loop = true;
-    const f = ctx.createBiquadFilter();
-    f.type = 'lowpass';
-    f.frequency.value = 420;
-    const g = ctx.createGain();
-    g.gain.value = 0.22;
-    src.connect(f).connect(g).connect(master);
-    src.start();
-    ambience = { src, g };
+    if (ambience.paused) ambience.play().catch(() => { /* blocked until a user gesture */ });
+  }
+
+  function stopAmbience() {
+    if (ambience && !ambience.paused) ambience.pause();
   }
 
   return {
     unlock() {
-      if (!ensure()) return;
-      if (ctx.state === 'suspended') ctx.resume();
+      if (ensure() && ctx.state === 'suspended') ctx.resume();
       startAmbience();
     },
     setEnabled(on) {
       enabled = on;
       if (master) master.gain.value = on ? 0.55 : 0;
-      if (on) startAmbience();
+      if (on) startAmbience(); else stopAmbience();
     },
     isEnabled: () => enabled,
 

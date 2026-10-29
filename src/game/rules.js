@@ -41,6 +41,7 @@ export function createShotTracker(bumpers, shooter) {
     stolen: 0,
     gateTaken: false,
     terikTouchedBumper: false,
+    lastTerikBumper: null,
     win: false,
     scratch: false,
     scratchLost: 0,
@@ -53,7 +54,10 @@ export function createShotTracker(bumpers, shooter) {
 // Returns { index, from, to } if the bumper changed, else null.
 export function onBumperHit(t, ballId, index) {
   if (t.win || t.scratch) return null;
-  if (ballId === terikId(t.shooter)) t.terikTouchedBumper = true;
+  if (ballId === terikId(t.shooter)) {
+    t.terikTouchedBumper = true;
+    t.lastTerikBumper = index;
+  }
   const from = t.bumpers[index];
   if (from === t.shooter) return null;
   t.bumpers[index] = t.shooter;

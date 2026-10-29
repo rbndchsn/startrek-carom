@@ -42,7 +42,7 @@ The full rules are in the game: click the **?** button.
 | Camera presets | **Overhead**, **Player** and **Bar** buttons |
 | Guide line | **Guide** button. Shows the path to the first thing your shot will hit. |
 | Raise | **Raise +50** once or more, then **Place raise**. Once per turn, up to the size of the pot. |
-| Sound | **Sound** button. All sounds are generated in the browser. |
+| Sound | **Sound** button. Turns the background music (`media/sounds/game.mp3`) and the sound effects on or off. |
 | Rules | **?** button |
 
 ## Project layout

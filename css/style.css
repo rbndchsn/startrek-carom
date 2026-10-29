@@ -234,6 +234,12 @@ button.primary:disabled { background: transparent; color: var(--muted); border-c
 }
 .overlay.wide .card { max-width: 640px; }
 .card h2 { margin: 0 0 10px; color: var(--amber); font-size: 22px; }
+.card h2.computer { color: var(--computer); }
+.overlay.good .card { border: 2px solid var(--human); }
+.overlay.bad .card { border: 2px solid var(--bad); }
+.overlay.computer .card { border: 2px solid var(--computer); }
+.overlay.event .card h2, .overlay.result .card h2 { font-size: 26px; letter-spacing: 0.03em; }
+.overlay.event, .overlay.result { background: rgba(5, 3, 4, 0.35); }
 .card h2.good { color: var(--human); }
 .card h2.bad { color: var(--bad); }
 .card h3 { margin: 14px 0 4px; font-size: 15px; color: var(--amber); }

@@ -94,6 +94,19 @@ export function createTable(scene) {
   cupBottom.position.copy(toWorld(HOLE.x, HOLE.y, -5));
   group.add(cup, cupBottom);
 
+  // Glow around the real hole, shown when the hole opens for a player.
+  const holeRing = new THREE.Mesh(
+    new THREE.RingGeometry(HOLE.r, HOLE.r + 0.9, 48),
+    new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, toneMapped: false, depthWrite: false }),
+  );
+  holeRing.rotation.x = -Math.PI / 2;
+  holeRing.position.copy(toWorld(HOLE.x, HOLE.y, 0.035));
+  const holeHalo = makeHalo(14, 0xffffff, 0);
+  holeHalo.position.copy(toWorld(HOLE.x, HOLE.y, 0.03));
+  const holeLight = new THREE.PointLight(0xffffff, 0, 14, 1.2);
+  holeLight.position.copy(toWorld(HOLE.x, HOLE.y, 3));
+  group.add(holeRing, holeHalo, holeLight);
+
   // Under-felt slab so the table looks solid from low angles.
   const slab = extrudeUp(shapeFrom(offsetPolygon(OUTLINE, RAIL.width + FRAME_WIDTH - 0.5)), 3, -6.2,
     new THREE.MeshStandardMaterial({ color: 0x1e1316, roughness: 0.9 }));
@@ -287,16 +300,28 @@ export function createTable(scene) {
       owners.forEach((o, i) => this.setBumperOwner(i, o, false));
     },
 
+    // Marks the hole as open for a player (or closed with null): the real hole glows in
+    // that player's color, and the hexagon marking glows faintly to match.
     setHexGlow(owner) {
       hexOwner = owner;
       if (owner) {
-        hexMat.emissive.setHex(COLORS[owner]);
-        hexMat.emissiveIntensity = 1.6;
-        hexHalo.material.color.setHex(COLORS[owner]);
-        hexHalo.material.opacity = 0.45;
+        const c = COLORS[owner];
+        hexMat.emissive.setHex(c);
+        hexMat.emissiveIntensity = 0.6;
+        hexHalo.material.color.setHex(c);
+        hexHalo.material.opacity = 0.15;
+        holeRing.material.color.setHex(c);
+        holeRing.material.opacity = 0.9;
+        holeHalo.material.color.setHex(c);
+        holeHalo.material.opacity = 0.8;
+        holeLight.color.setHex(c);
+        holeLight.intensity = 35;
       } else {
         hexMat.emissive.setHex(0x000000);
         hexHalo.material.opacity = 0;
+        holeRing.material.opacity = 0;
+        holeHalo.material.opacity = 0;
+        holeLight.intensity = 0;
       }
     },
 
@@ -324,8 +349,10 @@ export function createTable(scene) {
         }
       }
       if (hexOwner) {
-        hexMat.emissiveIntensity = 1.2 + 0.6 * Math.sin(time * 4);
-        hexHalo.material.opacity = 0.35 + 0.15 * Math.sin(time * 4);
+        const pulse = Math.sin(time * 4);
+        holeRing.material.opacity = 0.75 + 0.25 * pulse;
+        holeHalo.material.opacity = 0.65 + 0.25 * pulse;
+        holeLight.intensity = 30 + 12 * pulse;
       }
     },
   };
