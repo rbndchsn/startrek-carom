@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dom-jot</title>
+  <meta name="description" content="A fan-made 3D dom-jot table game, inspired by Star Trek: The Next Generation.">
+  <link rel="icon" href="media/icons/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <!-- three.js is loaded from the pinned copy in vendor/three (no CDN). -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "./vendor/three/three.module.js",
+      "three/addons/": "./vendor/three/addons/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="app">
+    <canvas id="scene"></canvas>
+    <div id="ui"></div>
+  </div>
+  <noscript>Dom-jot needs JavaScript to run.</noscript>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

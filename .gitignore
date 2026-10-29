@@ -1,0 +1,32 @@
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# Node (no dependencies are needed, but just in case)
+node_modules/
+npm-debug.log*
+
+# Python tools
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Logs and temp files
+*.log
+*.tmp
+
+# Kept on this computer only: research, reference images and dev tooling.
+# The game does not need these to run.
+assets/
+game_information/
+tablefull.png
+tests/
+tools/
+package.json
