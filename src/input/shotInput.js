@@ -14,7 +14,8 @@ export function createShotInput(ctx) {
   const raycaster = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
   const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -R);
-  const pickSphere = new THREE.Sphere(new THREE.Vector3(), 2.6);
+  // Generous grab area: a press within about 4 inches of your terik picks it up.
+  const pickSphere = new THREE.Sphere(new THREE.Vector3(), 4.2);
   const hitPoint = new THREE.Vector3();
   let aiming = null; // { pointerId, angleOffset, lastPull: {x, y}, state }
 

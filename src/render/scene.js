@@ -5,6 +5,7 @@ import { TABLE_HEIGHT } from '../data/tableLayout.js';
 import { toWorld, easeInOut } from './util.js';
 
 export function createScene(canvas) {
+  const isTouch = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.shadowMap.enabled = true;
@@ -30,7 +31,8 @@ export function createScene(canvas) {
     spot.position.set(x, 95, 4);
     spot.target.position.set(x * 0.6, 0, 0);
     spot.castShadow = true;
-    spot.shadow.mapSize.set(2048, 2048);
+    // Smaller shadow maps on phones and tablets to keep the frame rate up.
+    spot.shadow.mapSize.set(isTouch ? 1024 : 2048, isTouch ? 1024 : 2048);
     spot.shadow.bias = -0.0004;
     spot.shadow.camera.near = 40;
     spot.shadow.camera.far = 140;

@@ -43,7 +43,9 @@ The full rules are in the game: click the **?** button.
 | Camera presets | **Overhead**, **Player** and **Bar** buttons |
 | Guide line | **Guide** button. Shows the path to the first thing your shot will hit. |
 | Raise | **Raise +50** once or more, then **Place raise**. Once per turn, up to the size of the pot. |
-| Sound | **Sound** button. Turns the background music (`media/sounds/game.mp3`) and the sound effects on or off. |
+| Sound effects | **Sound** button |
+| Music | **Music** button. Plays `media/sounds/game.mp3` on a loop. Starts off on phones and tablets to save mobile data. |
+| Leave a round | **Leave round** button. Asks first. Your opponent takes the pot, like a fold. |
 | Rules | **?** button |
 
 ## Project layout
@@ -86,6 +88,13 @@ Then open http://localhost:8080 in a browser.
 
 The empty `.nojekyll` file tells GitHub Pages to serve the files as they are, without processing
 them.
+
+### Releasing an update
+
+Bump the version number in **both** `src/data/config.js` (`VERSION`) and `version.json`, then push.
+Browsers can keep old copies of the game files for up to 10 minutes. On load, the game compares its
+own version with `version.json` and, if they differ, refreshes its files once. The current version
+is shown on the start screen and in the help.
 
 ### Constraints this project follows
 

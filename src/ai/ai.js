@@ -18,7 +18,7 @@ export const LEVELS = {
     pickFromTop: 2, defense: false,
   },
   hard: {
-    aimErrorDeg: 0.35, powerError: 0.03, sweepStepDeg: 5, powers: [0.25, 0.45, 0.65, 0.9],
+    aimErrorDeg: 0.75, powerError: 0.05, sweepStepDeg: 5, powers: [0.25, 0.45, 0.65, 0.9],
     pickFromTop: 1, defense: true, refine: true, robust: true,
   },
 };

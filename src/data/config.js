@@ -1,5 +1,9 @@
 // Game settings, from game_information/game_rules.md.
 
+// Bump this and version.json together on every release. A browser holding an older copy
+// notices the difference on load and refreshes itself (see src/update.js).
+export const VERSION = '1.6.0';
+
 export const HUMAN = 'human';
 export const COMPUTER = 'computer';
 

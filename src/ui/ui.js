@@ -1,5 +1,5 @@
 // On-screen interface, built with plain DOM elements over the 3D canvas.
-import { DIFFICULTIES, MONEY } from '../data/config.js';
+import { DIFFICULTIES, MONEY, VERSION } from '../data/config.js';
 
 const el = (tag, cls, html) => {
   const e = document.createElement(tag);
@@ -52,8 +52,10 @@ export function createUI(root, h) {
       <button data-a="view" data-v="bar">Bar</button>
     </div>
     <div class="group">
-      <button data-a="sound" aria-pressed="true">Sound: on</button>
+      <button data-a="sound" aria-pressed="true" title="Sound effects">Sound: on</button>
+      <button data-a="music" aria-pressed="true" title="Background music">Music: on</button>
       <button data-a="help" title="Rules and controls">?</button>
+      <button data-a="leave" title="Leave this round and return to the start screen">Leave round</button>
     </div>`;
   root.append(bar);
   bar.addEventListener('click', (e) => {
@@ -66,6 +68,8 @@ export function createUI(root, h) {
     else if (a === 'guide') h.onGuideToggle();
     else if (a === 'view') h.onView(b.dataset.v);
     else if (a === 'sound') h.onSoundToggle();
+    else if (a === 'music') h.onMusicToggle();
+    else if (a === 'leave') h.onLeave();
     else if (a === 'help') showHelp();
   });
 
@@ -128,6 +132,7 @@ export function createUI(root, h) {
   function showHelp() {
     return modal(`
       <h2>How to play dom-jot</h2>
+      <p class="version">Version ${VERSION}</p>
       <div class="help">
         <h3>Goal</h3>
         <p>Light the bumpers, take control of the table, then sink your own glowing ball, the <b>terik</b>, in the hole.
@@ -155,7 +160,8 @@ export function createUI(root, h) {
           <li><b>Fine aim:</b> while holding, use the left and right arrow keys. <b>Escape</b> cancels.</li>
           <li><b>Camera:</b> drag empty space to rotate, wheel to zoom, right-drag to slide.</li>
           <li><b>Guide:</b> shows the path to the first thing your shot will hit.</li>
-          <li><b>Sound:</b> turns the music and sound effects on or off.</li>
+          <li><b>Sound</b> and <b>Music:</b> turn the sound effects and the background music on or off.</li>
+          <li><b>Leave round:</b> gives up the current round. Your opponent takes the pot.</li>
         </ul>
       </div>`, [{ label: 'Close', value: true, cls: 'primary' }], 'wide');
   }
@@ -206,6 +212,17 @@ export function createUI(root, h) {
       btn('sound').setAttribute('aria-pressed', String(on));
     },
 
+    setMusic(on) {
+      btn('music').textContent = `Music: ${on ? 'on' : 'off'}`;
+      btn('music').setAttribute('aria-pressed', String(on));
+    },
+
+    setLeave(enabled) {
+      const b = btn('leave');
+      if (b.disabled === !enabled) return;
+      b.disabled = !enabled;
+    },
+
     setHint(text) {
       hint.textContent = text || '';
       hint.classList.toggle('hidden', !text);
@@ -254,6 +271,7 @@ export function createUI(root, h) {
           <p class="bank">Your bank: <b>${banks.human}</b> latinum · Opponent: <b>${banks.computer}</b> latinum<br>
           <span class="muted">Each round costs ${MONEY.openingBet} latinum from each player.</span></p>
           ${note ? `<p class="note bad">${note}</p>` : ''}
+          <p class="version">Version ${VERSION}</p>
           <div class="buttons">
             <button data-b="help">How to play</button>
             <button data-b="play" class="primary" ${canPlay ? '' : 'disabled'}>Play</button>

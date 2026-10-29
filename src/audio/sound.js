@@ -1,8 +1,10 @@
 // Sound effects, synthesized with the Web Audio API. No sound files are needed.
-export function createSound() {
+// musicOn: whether the background music starts switched on.
+export function createSound({ musicOn = true } = {}) {
   let ctx = null;
   let master = null;
-  let enabled = true;
+  let enabled = true;        // sound effects
+  let musicEnabled = musicOn;
   let ambience = null;
   const last = {};
 
@@ -61,7 +63,7 @@ export function createSound() {
   // Background music: media/sounds/game.mp3, streamed and looped.
   // Browsers only allow audio after the player clicks or presses a key, so it starts on the first one.
   function startAmbience() {
-    if (!enabled) return;
+    if (!musicEnabled) return;
     if (!ambience) {
       ambience = new Audio('media/sounds/game.mp3');
       ambience.loop = true;
@@ -80,12 +82,18 @@ export function createSound() {
       if (ensure() && ctx.state === 'suspended') ctx.resume();
       startAmbience();
     },
+    // Sound effects on or off.
     setEnabled(on) {
       enabled = on;
       if (master) master.gain.value = on ? 0.55 : 0;
-      if (on) startAmbience(); else stopAmbience();
     },
     isEnabled: () => enabled,
+    // Background music on or off.
+    setMusic(on) {
+      musicEnabled = on;
+      if (on) startAmbience(); else stopAmbience();
+    },
+    isMusic: () => musicEnabled,
 
     strike(power) { noise({ dur: 0.05, vol: 0.25 + power * 0.4, filter: 1800 }); tone({ freq: 180, dur: 0.06, vol: 0.12 }); },
     ballClick(speed) {

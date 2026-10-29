@@ -37,7 +37,10 @@ export class Game {
     this.stick = createStick(scene);
     this.guide = createGuide(scene);
     this.coin = createCoin(scene);
-    this.sound = createSound();
+    // Touch devices (phones, tablets) start with the music off to save mobile data.
+    this.isTouch = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+    this.sound = createSound({ musicOn: !this.isTouch });
+    this.compToken = 0;
 
     this.session = createSession();
     this.difficulty = 'medium';
@@ -72,11 +75,17 @@ export class Game {
         if (!this.guideOn) this.guide.hide();
       },
       onView: (v) => this.setView(v),
+      onMusicToggle: () => {
+        this.sound.setMusic(!this.sound.isMusic());
+        this.ui.setMusic(this.sound.isMusic());
+      },
+      onLeave: () => this.onLeave(),
       onSoundToggle: () => {
         this.sound.setEnabled(!this.sound.isEnabled());
         this.ui.setSound(this.sound.isEnabled());
       },
     });
+    this.ui.setMusic(this.sound.isMusic());
     window.addEventListener('pointerdown', () => this.sound.unlock(), true);
     window.addEventListener('keydown', () => this.sound.unlock(), true);
 
@@ -101,6 +110,7 @@ export class Game {
 
   update(dt) {
     this.time += dt;
+    this.ui.setLeave(this.phase === 'aim' || this.phase === 'computer');
     if (this.phase === 'shooting') this.stepPhysics(dt);
     if (this.world) {
       // Your terik pulses while it waits for you to take the shot.
@@ -261,12 +271,29 @@ export class Game {
     this.playTurn(player, false);
   }
 
-  playTurn(player, continuing) {
+  async playTurn(player, continuing) {
     this.refreshBoard();
     this.updateMoney();
     if (player === HUMAN) {
-      this.phase = 'aim';
       this.ui.setTurn(continuing ? 'Your turn continues' : 'Your turn', HUMAN);
+      if (!this.session.shownHowTo) {
+        // Once per session, before the first shot.
+        this.session.shownHowTo = true;
+        this.phase = 'howto';
+        await this.ui.eventCard({
+          title: 'How to shoot',
+          lines: [
+            '<b>1.</b> Press and hold on your pulsing <span class="c-human">green</span> ball, the terik.',
+            '<b>2.</b> Drag back, away from where you want it to go. The stick pulls back with you. A longer pull gives more power.',
+            '<b>3.</b> Release to shoot.',
+            'Aim for the bumpers: each one your terik hits lights up green. Need help aiming? Turn on <b>Guide</b>.',
+          ],
+          mood: 'good',
+          button: 'Got it',
+        });
+      }
+      this.phase = 'aim';
+      this.restStick();
       this.ui.setHint('Press on your green terik, drag back, release to shoot.');
       this.refreshRaise();
     } else {
@@ -279,12 +306,18 @@ export class Game {
   }
 
   async computerTurn() {
+    // Each call gets a token. Leaving or resuming the turn starts a new call, which makes any
+    // older call stop at its next check, so the computer can never take two shots at once.
+    const token = ++this.compToken;
+    const live = () => this.phase === 'computer' && token === this.compToken;
+    this.stick.hide();
     await delay(650);
-    if (this.phase !== 'computer') return;
+    if (!live()) return;
     const amt = decideRaise(this.difficulty, this.session, this.roundMoney, this.bumpers);
     if (amt > 0) {
       this.sound.raise();
       const calls = await this.ui.promptCall({ oppName: this.oppName, amount: amt, bank: this.session.banks[HUMAN] });
+      if (!live()) return;
       const res = applyRaise(this.session, this.roundMoney, COMPUTER, amt, calls);
       this.updateMoney();
       if (res.result === 'fold') { this.endByFold(COMPUTER); return; }
@@ -294,13 +327,14 @@ export class Game {
     const shot = await chooseShot(this.world, this.bumpers, COMPUTER, this.difficulty, {
       yieldEvery: 8, pot: this.roundMoney.pot,
     });
+    if (!live()) return;
     this.ui.setThinking(null);
     this.ui.setTurn(`${this.oppName}'s turn`, COMPUTER);
-    if (this.phase !== 'computer') return;
     const b = this.world.getBall(terikId(COMPUTER));
     const pull = shot.power ** (1 / 1.6) * MAX_PULL * 0.35;
-    await this.tweens.add(0.9, (k) => this.stick.aim(b, shot.angle, pull * easeOut(k), COLORS.computer));
+    await this.tweens.add(0.9, (k) => { if (live()) this.stick.aim(b, shot.angle, pull * easeOut(k), COLORS.computer); });
     await delay(150);
+    if (!live()) return;
     this.executeShot(COMPUTER, shot.angle, shot.power);
   }
 
@@ -475,9 +509,11 @@ export class Game {
     this.refreshRaise();
     const youWin = winner === HUMAN;
     let title;
-    if (reason === 'fold') title = youWin ? `${this.oppName} folds. You win!` : 'You folded.';
+    if (reason === 'leave') title = 'You left the round.';
+    else if (reason === 'fold') title = youWin ? `${this.oppName} folds. You win!` : 'You folded.';
     else title = youWin ? 'Dom-jot! You win the round!' : `Dom-jot! ${this.oppName} wins the round.`;
     const lines = [...how];
+    if (reason === 'leave') lines.push('Leaving a round gives it up, like folding.');
     if (reason === 'fold') {
       lines.push(youWin ? `${this.oppName} would not match your raise and gave up the round.`
         : `You did not match ${this.oppName}'s raise and gave up the round.`);
@@ -513,6 +549,42 @@ export class Game {
     else this.showMenu();
   }
 
+  // The stick rests behind your terik, pointing at the hole, while you decide your shot.
+  restStick() {
+    if (this.phase !== 'aim' || !this.world) { this.stick.hide(); return; }
+    const b = this.world.getBall(terikId(HUMAN));
+    if (!b || !b.active) { this.stick.hide(); return; }
+    const angle = Math.atan2(HOLE.y - b.y, HOLE.x - b.x);
+    this.stick.aim(b, angle, 1.2, COLORS.human);
+  }
+
+  // Leave round: asks first. The opponent takes the pot, like a fold.
+  async onLeave() {
+    if (this.phase !== 'aim' && this.phase !== 'computer') return;
+    const was = this.phase;
+    this.phase = 'leaving';
+    if (this.input.isAiming()) this.input.cancel();
+    const choice = await this.ui.showResult({
+      title: 'Leave this round?',
+      lines: [`${this.oppName} takes the pot of <b>${this.roundMoney.pot}</b> latinum, as if you folded.`,
+        'Your bank carries on, and you can start a new round or change opponent.'],
+      primary: 'Stay', secondary: 'Leave round', mood: '',
+    });
+    if (choice === 'secondary') {
+      this.phase = 'roundOver';
+      this.stick.hide();
+      this.ui.setThinking(null);
+      this.ui.setTurn('Round over');
+      const pot = awardPot(this.session, this.roundMoney, COMPUTER);
+      this.updateMoney();
+      this.finishRound({ winner: COMPUTER, reason: 'leave', pot, bonus: 0 });
+      return;
+    }
+    this.phase = was;
+    if (was === 'aim') { this.restStick(); this.refreshRaise(); }
+    else this.computerTurn(); // restart the computer's turn cleanly
+  }
+
   // ---------- Human input ----------
 
   onAim(s) {
@@ -526,7 +598,7 @@ export class Game {
   }
 
   onAimCancel() {
-    this.stick.hide();
+    this.restStick();
     this.guide.hide();
     this.ui.showPower(null);
   }

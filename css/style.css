@@ -274,6 +274,7 @@ button.primary:disabled { background: transparent; color: var(--muted); border-c
 .diff.sel { border-color: var(--amber); background: rgba(255, 181, 71, 0.12); }
 .diff:focus-within { outline: 2px solid var(--amber); outline-offset: 2px; }
 .bank { font-size: 14px; }
+.version { color: var(--muted); font-size: 12px; margin: 10px 0 0; }
 
 @media (max-width: 760px) {
   .panel { min-width: 0; width: calc(50vw - 22px); font-size: 11px; padding: 7px 9px; }
