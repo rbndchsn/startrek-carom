@@ -19,7 +19,7 @@ export const LEVELS = {
   },
   hard: {
     aimErrorDeg: 0.35, powerError: 0.03, sweepStepDeg: 5, powers: [0.25, 0.45, 0.65, 0.9],
-    pickFromTop: 1, defense: true, refine: true,
+    pickFromTop: 1, defense: true, refine: true, robust: true,
   },
 };
 
@@ -36,27 +36,37 @@ export function evaluateShot(world, bumpers, shooter, angle, power, ctx = {}) {
   const w = world.clone();
   const bs = bumpers.slice();
   const t = createShotTracker(bs, shooter);
-  w.strike(terikId(shooter), angle, power * PHYSICS.maxShotSpeed);
-  w.simulate((e) => {
-    if (e.type === 'bumper') onBumperHit(t, e.ballId, e.bumperIndex);
-    else if (e.type === 'drop') {
-      if (onDrop(t, e.ballId) === 'win') return false;
+  const id = terikId(shooter);
+  const holeWasOpen = isHoleOpen(bumpers, shooter);
+  w.strike(id, angle, power * PHYSICS.maxShotSpeed);
+  // Step manually to also track how close any rolling ball passes to the hole.
+  let closest = Infinity;
+  const events = [];
+  const start = w.time;
+  while (w.isMoving() && w.time - start < PHYSICS.maxSimTime && !t.win) {
+    events.length = 0;
+    w.step(events);
+    for (const b of w.balls) {
+      if (b.active && (b.vx !== 0 || b.vy !== 0) && !(b.id === id && holeWasOpen)) {
+        closest = Math.min(closest, Math.hypot(b.x - HOLE.x, b.y - HOLE.y));
+      }
     }
-    return true;
-  });
+    for (const e of events) {
+      if (e.type === 'bumper') onBumperHit(t, e.ballId, e.bumperIndex);
+      else if (e.type === 'drop') onDrop(t, e.ballId);
+    }
+  }
   const outcome = finishShot(t);
-  return { score: scoreOutcome(t, outcome, w, bs, shooter, ctx), outcome, tracker: t };
+  let score = scoreOutcome(t, outcome, w, bs, shooter, ctx);
+  // Risk: rolling close past a closed hole can turn into a scratch with a little aim error.
+  if (!holeWasOpen && outcome.type !== 'win' && closest < 5) score -= (5 - closest) * 25;
+  return { score, outcome, tracker: t };
 }
 
 function scoreOutcome(t, outcome, w, bs, shooter, ctx) {
   const opp = other(shooter);
   if (outcome.type === 'win') return 1000;
-  if (outcome.type === 'scratch') {
-    // A desperate wipe can be worth it when the opponent is about to win a big pot.
-    const oppThreat = bs !== null && ctx.oppThreatBefore;
-    if (ctx.allowDeliberateScratch && oppThreat) return 60;
-    return -300;
-  }
+  if (outcome.type === 'scratch') return -300 - t.scratchLost * 15;
   let s = 0;
   s += t.lit * 12 + t.stolen * 18;
   if (t.gateTaken) s += 30;
@@ -114,12 +124,7 @@ function candidateAngles(world, bumpers, shooter, level) {
 export async function chooseShot(world, bumpers, shooter, levelName, opts = {}) {
   const level = LEVELS[levelName];
   const rng = opts.rng || Math.random;
-  const opp = other(shooter);
-  const ctx = {
-    defense: level.defense,
-    allowDeliberateScratch: levelName === 'hard' && (opts.pot || 0) >= 300,
-    oppThreatBefore: countOwned(bumpers, opp) >= 5 && bumpers[GATE_INDEX] === opp,
-  };
+  const ctx = { defense: level.defense };
   const angles = candidateAngles(world, bumpers, shooter, level);
   const results = [];
   const yieldNow = opts.yieldEvery ? () => new Promise((r) => setTimeout(r, 0)) : null;
@@ -144,6 +149,27 @@ export async function chooseShot(world, bumpers, shooter, levelName, opts = {}) 
       if (yieldNow) await yieldNow();
     }
     results.sort((x, y) => y.score - x.score);
+  }
+
+  // Robustness: re-test the best candidates with small aim and power errors and keep
+  // the ones that still work, so a near-perfect shot that scratches on a slight miss loses out.
+  if (level.robust) {
+    const top = results.slice(0, 6);
+    const da = Math.max(0.006, (level.aimErrorDeg * Math.PI) / 180 * 1.5);
+    const jitters = [[da, 0], [-da, 0], [0, level.powerError * 1.5], [0, -level.powerError * 1.5]];
+    for (const c of top) {
+      let sum = c.score;
+      let worst = c.score;
+      for (const [a, p] of jitters) {
+        const r = evaluateShot(world, bumpers, shooter, c.angle + a, Math.min(1, Math.max(0.08, c.power * (1 + p))), ctx);
+        sum += r.score;
+        worst = Math.min(worst, r.score);
+      }
+      c.robustScore = sum / (jitters.length + 1) + Math.min(0, worst) * 0.3;
+      if (yieldNow) await yieldNow();
+    }
+    top.sort((x, y) => y.robustScore - x.robustScore);
+    results.splice(0, top.length, ...top);
   }
 
   const pool = results.slice(0, Math.max(1, level.pickFromTop));

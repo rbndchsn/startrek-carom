@@ -43,6 +43,7 @@ export function createShotTracker(bumpers, shooter) {
     terikTouchedBumper: false,
     win: false,
     scratch: false,
+    scratchLost: 0,
     noBumperFirst: false,
     dropped: [],
   };
@@ -75,8 +76,12 @@ export function onDrop(t, ballId) {
     return 'noBumperFirst';
   }
   if (!t.scratch) {
+    // A scratch costs only the shooter: their own bumpers go dark. The opponent keeps theirs.
     t.scratch = true;
-    t.bumpers.fill(null);
+    t.scratchLost = 0;
+    for (let i = 0; i < t.bumpers.length; i++) {
+      if (t.bumpers[i] === t.shooter) { t.bumpers[i] = null; t.scratchLost++; }
+    }
   }
   return 'scratch';
 }

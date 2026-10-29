@@ -84,6 +84,7 @@ export const PHYSICS = {
   bumperKick: 8,             // extra push from a bumper, like a pinball bumper
   holeCaptureRadius: 1.15,   // ball center inside this drops
   holeCaptureMaxSpeed: 110,  // faster balls skip over the hole
-  holeLipPull: 60,           // pull toward the hole center inside the hole radius
+  holeLipPull: 20,           // pull on a rolling ball toward the hole center, inside the hole radius
+                             // (a ball that stops on the rim stays there)
   maxSimTime: 14,            // safety stop for one shot, seconds
 };

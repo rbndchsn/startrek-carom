@@ -72,15 +72,22 @@ export class PhysicsWorld {
       const hx = HOLE.x - b.x;
       const hy = HOLE.y - b.y;
       const dh = Math.hypot(hx, hy);
+      let s = Math.hypot(b.vx, b.vy);
+      if (s === 0) continue;
+      // The rim only bends a rolling ball toward the hole. A ball at rest stays put.
       if (dh < HOLE.r && dh > 1e-6) {
         b.vx += (hx / dh) * P.holeLipPull * dt;
         b.vy += (hy / dh) * P.holeLipPull * dt;
+        s = Math.hypot(b.vx, b.vy);
       }
-      let s = Math.hypot(b.vx, b.vy);
-      if (s === 0) continue;
       const ns = Math.max(0, s - P.friction * dt);
-      if (ns < P.stopSpeed && dh >= HOLE.r) {
+      if (ns < P.stopSpeed) {
         b.vx = 0; b.vy = 0;
+        if (dh < P.holeCaptureRadius) {
+          // Stopped over the opening: it falls in.
+          b.active = false;
+          events.push({ type: 'drop', ballId: b.id, time: this.time });
+        }
         continue;
       }
       const k = Math.min(ns, P.maxBallSpeed) / s;

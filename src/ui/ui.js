@@ -81,6 +81,11 @@ export function createUI(root, h) {
   const toasts = el('div', 'toasts');
   root.append(toasts);
 
+  // Large center-screen announcement for important moments.
+  const announceBox = el('div', 'announce hidden');
+  root.append(announceBox);
+  let announceTimer = null;
+
   const q = (parent, k) => parent.querySelector(`[data-k="${k}"]`);
   const btn = (a) => bar.querySelector(`[data-a="${a}"]`);
 
@@ -125,7 +130,8 @@ export function createUI(root, h) {
         bumpers into the hole to win. Call it: <b>Dom-jot!</b></p>
         <p>If your terik drops into your open hole without touching a bumper first, it goes back to its start spot and your turn ends.</p>
         <h3>Scratch</h3>
-        <p>Any other ball in the hole is a scratch: every bumper goes dark, you pay ${MONEY.scratchPenalty} latinum to your opponent, and the turn passes.</p>
+        <p>Any other ball in the hole is a scratch. Only the shooter pays for it: <b>the shooter's own bumpers go dark</b>,
+        the shooter pays ${MONEY.scratchPenalty} latinum to the opponent, and the turn passes. The opponent keeps their bumpers.</p>
         <h3>Latinum</h3>
         <p>You start the session with ${MONEY.startingBank}. Each round costs ${MONEY.openingBet} from each player.
         Before a shot you may raise once per turn, ${MONEY.raiseStep} per click, up to the size of the pot. Your opponent calls or folds.
@@ -199,7 +205,20 @@ export function createUI(root, h) {
       power.querySelector('.label').textContent = `${Math.round(p * 100)}%`;
     },
 
-    toast(text, kind = 'info', ms = 2400) {
+    // Shows a big message in the middle of the screen. Resolves when it hides.
+    announce(title, detail, kind = 'info', ms = 3800) {
+      clearTimeout(announceTimer);
+      announceBox.className = `announce ${kind}`;
+      announceBox.innerHTML = `<div class="a-title">${title}</div>${detail ? `<div class="a-detail">${detail}</div>` : ''}`;
+      return new Promise((resolve) => {
+        announceTimer = setTimeout(() => {
+          announceBox.classList.add('out');
+          setTimeout(() => { announceBox.className = 'announce hidden'; resolve(); }, 400);
+        }, ms);
+      });
+    },
+
+    toast(text, kind = 'info', ms = 3600) {
       const t = el('div', `toast ${kind}`, text);
       toasts.append(t);
       while (toasts.children.length > 4) toasts.firstChild.remove();

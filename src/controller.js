@@ -153,7 +153,7 @@ export class Game {
         this.scratchShown = true;
         this.table.setAllBumpers(this.bumpers);
         this.sound.scratch();
-        this.ui.toast('Scratch! Every bumper goes dark.', 'bad');
+        this.ui.toast(t.shooter === HUMAN ? 'Scratch! Your bumpers go dark.' : `Scratch by ${this.oppName}! Its bumpers go dark.`, t.shooter === HUMAN ? 'bad' : 'good');
         this.refreshBoard();
       } else if (r === 'win') {
         for (const x of this.world.balls) { x.vx = 0; x.vy = 0; }
@@ -321,16 +321,23 @@ export class Game {
     if (out.type === 'scratch') {
       const paid = payScratchPenalty(this.session, shooter);
       this.updateMoney();
-      this.ui.toast(shooter === HUMAN ? `You pay a ${paid} latinum scratch penalty.` : `${this.oppName} pays you a ${paid} latinum penalty.`, shooter === HUMAN ? 'bad' : 'good');
       this.respotDropped(t);
-      await delay(1400);
+      const lost = t.scratchLost;
+      const bumpersText = (n) => (n === 1 ? '1 lit bumper' : `${n} lit bumpers`);
+      const mine = shooter === HUMAN;
+      const what = this.describeDropped(t);
+      const detail = mine
+        ? `${what} went into the hole before it was open for you.<br>You lose ${lost ? `your ${bumpersText(lost)}` : 'no bumpers (you had none lit)'} and pay ${paid} latinum to ${this.oppName}.<br>${this.oppName}'s bumpers are not affected.`
+        : `${what} went into the hole on ${this.oppName}'s shot.<br>${this.oppName} loses ${lost ? bumpersText(lost) : 'nothing (it had no bumpers lit)'} and pays you ${paid} latinum.<br><b>Your bumpers are safe.</b>`;
+      await this.ui.announce('SCRATCH!', detail, mine ? 'bad' : 'good', 4500);
       this.beginTurn(out.next);
       return;
     }
     if (out.type === 'noBumperFirst') {
-      this.ui.toast(`${who === 'You' ? 'Your' : `${this.oppName}'s`} terik dropped without touching a bumper first. It goes back to its start spot.`);
       this.respotDropped(t);
-      await delay(1400);
+      await this.ui.announce('No bumper first',
+        `${who === 'You' ? 'Your' : `${this.oppName}'s`} terik dropped into the open hole without touching a bumper first.<br>It goes back to its start spot, and the turn passes. No penalty.`,
+        'info', 3800);
       this.beginTurn(out.next);
       return;
     }
@@ -348,6 +355,16 @@ export class Game {
     this.beginTurn(out.next);
   }
 
+  // Names the balls that dropped in a scratch, from the human's point of view.
+  describeDropped(t) {
+    const names = [...new Set(t.dropped.map((id) => {
+      if (id === terikId(HUMAN)) return 'Your green terik';
+      if (id === terikId(COMPUTER)) return `${this.oppName}'s blue terik`;
+      return 'An obstacle ball';
+    }))];
+    return names.join(' and ');
+  }
+
   respotDropped(t) {
     for (const id of t.dropped) {
       const spot = respotBall(this.world, this.startPositions, id);
@@ -363,7 +380,8 @@ export class Game {
     this.ui.setTurn(winner === HUMAN ? 'Dom-jot! You win' : `Dom-jot! ${this.oppName} wins`, winner);
     this.table.startLightShow();
     if (winner === HUMAN) this.sound.win(); else this.sound.lose();
-    this.ui.toast('Dom-jot!', 'big', 2600);
+    this.ui.announce('DOM-JOT!', winner === HUMAN ? 'Your terik is in the hole. You win the round!' : `${this.oppName} sinks its terik and wins the round.`,
+      winner === HUMAN ? 'good' : 'computer', 3000);
     const pot = awardPot(this.session, this.roundMoney, winner);
     const bonus = isStraightNines(this.ownedAtTurnStart) ? payStraightNines(this.session, winner) : 0;
     this.updateMoney();
@@ -507,7 +525,10 @@ export class Game {
       this.table.setHexGlow(holeFor);
       if (announce && holeFor) {
         this.sound.holeOpen();
-        this.ui.toast(holeFor === HUMAN ? 'The hole is OPEN for you!' : `The hole is open for ${this.oppName}!`, holeFor === HUMAN ? 'good' : 'bad');
+        this.ui.announce('HOLE OPEN',
+          holeFor === HUMAN ? 'The hole is open for you. Bounce your terik off one of your lit bumpers into it to win.'
+            : `The hole is open for ${this.oppName}. Steal its bumpers or the gate bumper to close it.`,
+          holeFor === HUMAN ? 'good' : 'computer', 3000);
       }
     }
   }
