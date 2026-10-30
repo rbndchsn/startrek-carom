@@ -8,7 +8,8 @@ import { terikId } from './rules.js';
 export const OBSTACLE_COUNT = 13;
 
 // Returns { world, startPositions } where startPositions maps ball id to {x, y}.
-export function createRoundWorld(rng = Math.random) {
+// obstacleCount: set by difficulty (see DIFFICULTIES in config.js).
+export function createRoundWorld(rng = Math.random, obstacleCount = OBSTACLE_COUNT) {
   const world = new PhysicsWorld();
   const startPositions = {};
   for (const p of [HUMAN, COMPUTER]) {
@@ -16,7 +17,7 @@ export function createRoundWorld(rng = Math.random) {
     world.addBall({ id: terikId(p), kind: 'terik', owner: p, x: s.x, y: s.y });
     startPositions[terikId(p)] = { x: s.x, y: s.y };
   }
-  const spots = randomObstaclePositions(OBSTACLE_COUNT, rng);
+  const spots = randomObstaclePositions(obstacleCount, rng);
   spots.forEach((s, i) => {
     const id = `obstacle-${i}`;
     world.addBall({ id, kind: 'obstacle', x: s.x, y: s.y });

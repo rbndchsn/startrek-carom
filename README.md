@@ -20,7 +20,8 @@ Your latinum bank lasts until you close the browser.
 ## How the game works, in short
 
 - Each player strikes their own glowing ball, called a **terik**. Yours is green and the
-  computer's is blue. Thirteen whitish obstacle balls are scattered at random to block your path.
+  computer's is blue. Whitish obstacle balls are scattered at random to block your path: 10 on Easy,
+  13 on Medium and 15 on Hard.
 - When your terik hits a bumper, it lights in your color. Hitting your opponent's lit bumper steals it.
   Obstacle balls never light or steal bumpers.
 - The hole opens for you when all 10 bumpers are lit, you own at least 6, and you own the gate

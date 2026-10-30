@@ -2,7 +2,7 @@
 
 // Bump this and version.json together on every release. A browser holding an older copy
 // notices the difference on load and refreshes itself (see src/update.js).
-export const VERSION = '1.10.0';
+export const VERSION = '1.11.0';
 
 export const HUMAN = 'human';
 export const COMPUTER = 'computer';
@@ -36,7 +36,7 @@ export const PLAYER_NAMES = {
 };
 
 export const DIFFICULTIES = {
-  easy: { label: 'Easy', opponent: 'Nervous tourist' },
-  medium: { label: 'Medium', opponent: 'Station hustler' },
-  hard: { label: 'Hard', opponent: 'Nausicaan' },
+  easy: { label: 'Easy', opponent: 'Nervous tourist', obstacles: 10 },
+  medium: { label: 'Medium', opponent: 'Station hustler', obstacles: 13 },
+  hard: { label: 'Hard', opponent: 'Nausicaan', obstacles: 15 },
 };

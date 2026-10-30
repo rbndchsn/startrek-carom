@@ -231,7 +231,7 @@ export class Game {
 
     const first = await this.coinToss();
 
-    const { world, startPositions } = createRoundWorld();
+    const { world, startPositions } = createRoundWorld(Math.random, DIFFICULTIES[this.difficulty].obstacles);
     this.world = world;
     this.startPositions = startPositions;
     this.ballViews.build(world);
