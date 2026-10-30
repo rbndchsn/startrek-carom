@@ -179,6 +179,23 @@ button.primary:disabled { background: transparent; color: var(--muted); border-c
 .toast.big { font-size: 26px; font-weight: 800; color: var(--amber); letter-spacing: 0.06em; }
 .toast.fade { opacity: 0; }
 
+/* Games played counter, bottom right */
+.played {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  font-size: 13px;
+  color: var(--muted);
+  pointer-events: none;
+  z-index: 11;
+}
+.played b { color: var(--amber); }
+#ui > .played { pointer-events: none; }
+
 /* Center-screen announcement */
 .announce {
   position: absolute;
@@ -284,6 +301,8 @@ button.primary:disabled { background: transparent; color: var(--muted); border-c
   .banner { top: 112px; font-size: 13px; padding: 6px 14px; }
   .toasts { top: 152px; }
   .announce .a-title { font-size: 26px; }
+  .played { bottom: auto; top: 112px; right: 12px; font-size: 11px; padding: 4px 8px; }
+  .banner { left: 12px; transform: none; }
   .announce .a-detail { font-size: 15px; }
   .hint { display: none; }
   .power { right: 12px; height: 160px; }

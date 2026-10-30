@@ -22,7 +22,7 @@ import { Tweens, toWorld, easeOut } from './render/util.js';
 import { createShotInput, MAX_PULL } from './input/shotInput.js';
 import { createUI } from './ui/ui.js';
 import { createSound } from './audio/sound.js';
-import { trackEvent } from './analytics.js';
+import { trackEvent, fetchGamesPlayed } from './analytics.js';
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -91,6 +91,17 @@ export class Game {
     window.addEventListener('keydown', () => this.sound.unlock(), true);
 
     this.table.setAllBumpers(this.bumpers);
+    this.gamesPlayed = null;
+    this.refreshGamesPlayed();
+  }
+
+  // Reads the total from GoatCounter. Never lowers the number already shown, since the
+  // counter can lag a few seconds behind games just started.
+  async refreshGamesPlayed() {
+    const n = await fetchGamesPlayed();
+    if (n === null) return;
+    this.gamesPlayed = Math.max(n, this.gamesPlayed ?? 0);
+    this.ui.setGamesPlayed(this.gamesPlayed);
   }
 
   get oppName() { return DIFFICULTIES[this.difficulty].opponent; }
@@ -183,6 +194,7 @@ export class Game {
 
   async showMenu() {
     this.phase = 'menu';
+    this.refreshGamesPlayed();
     this.ui.showHud(false);
     this.ui.setHint(null);
     this.controls.autoRotate = true;
@@ -203,6 +215,7 @@ export class Game {
     this.pendingHoleCard = false;
     this.roundMoney = startRound(this.session);
     trackEvent(`round-start-${this.difficulty}`, `Round started (${DIFFICULTIES[this.difficulty].label})`);
+    if (this.gamesPlayed !== null) this.ui.setGamesPlayed(++this.gamesPlayed);
     this.bumpers = createBumpers();
     this.table.stopLightShow();
     this.table.setAllBumpers(this.bumpers);

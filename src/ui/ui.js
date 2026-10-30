@@ -85,6 +85,22 @@ export function createUI(root, h) {
   const toasts = el('div', 'toasts');
   root.append(toasts);
 
+  // Bottom right: total games played by everyone (hidden until the number is known).
+  const played = el('div', 'played hidden');
+  root.append(played);
+
+  // Sits in the bottom-right corner, or just above the button bar if the bar reaches that corner.
+  function placePlayed() {
+    if (played.classList.contains('hidden') || window.innerWidth <= 760) { played.style.bottom = ''; return; }
+    played.style.bottom = '16px';
+    if (bar.classList.contains('hidden')) return;
+    const b = bar.getBoundingClientRect();
+    const p = played.getBoundingClientRect();
+    const overlaps = p.left < b.right + 8 && p.right > b.left - 8 && p.bottom > b.top - 8;
+    if (overlaps) played.style.bottom = `${Math.ceil(window.innerHeight - b.top + 8)}px`;
+  }
+  window.addEventListener('resize', placePlayed);
+
   // Large center-screen announcement for important moments.
   const announceBox = el('div', 'announce hidden');
   root.append(announceBox);
@@ -168,6 +184,7 @@ export function createUI(root, h) {
   return {
     showHud(on) {
       for (const x of [money, banner, board, bar]) x.classList.toggle('hidden', !on);
+      placePlayed();
     },
 
     updateMoney({ human, computer, pot, oppName }) {
@@ -317,6 +334,13 @@ export function createUI(root, h) {
     },
 
     showHelp,
+
+    setGamesPlayed(n) {
+      if (n === null || n === undefined) { played.classList.add('hidden'); return; }
+      played.innerHTML = `Number of Games Played: <b>${n.toLocaleString()}</b>`;
+      played.classList.remove('hidden');
+      placePlayed();
+    },
 
     setThinking(text) {
       banner.classList.toggle('thinking', !!text);
