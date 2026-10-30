@@ -22,6 +22,7 @@ import { Tweens, toWorld, easeOut } from './render/util.js';
 import { createShotInput, MAX_PULL } from './input/shotInput.js';
 import { createUI } from './ui/ui.js';
 import { createSound } from './audio/sound.js';
+import { trackEvent } from './analytics.js';
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -201,6 +202,7 @@ export class Game {
     this.phase = 'toss';
     this.pendingHoleCard = false;
     this.roundMoney = startRound(this.session);
+    trackEvent(`round-start-${this.difficulty}`, `Round started (${DIFFICULTIES[this.difficulty].label})`);
     this.bumpers = createBumpers();
     this.table.stopLightShow();
     this.table.setAllBumpers(this.bumpers);
@@ -445,6 +447,8 @@ export class Game {
     this.ui.setTurn(winner === HUMAN ? 'Dom-jot! You win' : `Dom-jot! ${this.oppName} wins`, winner);
     this.table.startLightShow();
     if (winner === HUMAN) this.sound.win(); else this.sound.lose();
+    trackEvent(winner === HUMAN ? `round-won-player-${this.difficulty}` : `round-won-computer-${this.difficulty}`,
+      winner === HUMAN ? 'Round won by the player' : 'Round won by the computer');
     const pot = awardPot(this.session, this.roundMoney, winner);
     const bonus = isStraightNines(this.ownedAtTurnStart) ? payStraightNines(this.session, winner) : 0;
     this.updateMoney();
@@ -564,6 +568,7 @@ export class Game {
       this.ui.setTurn('Round over');
       const pot = awardPot(this.session, this.roundMoney, COMPUTER);
       this.updateMoney();
+      trackEvent('round-left', 'Round left early');
       this.finishRound({ winner: COMPUTER, reason: 'leave', pot, bonus: 0 });
       return;
     }

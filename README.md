@@ -105,6 +105,12 @@ is shown on the start screen and in the help.
 - **Small files.** GitHub rejects files over 100 MB and recommends a repository under 1 GB.
   Keep textures and sounds compressed.
 
+## Privacy
+
+The game counts anonymous visits and games played with [GoatCounter](https://www.goatcounter.com),
+which uses no cookies and collects no personal data. Only page views and game events (a round
+started, which difficulty, who won) are recorded.
+
 ## Credits and disclaimer
 
 This is an unofficial, non-commercial fan project. Star Trek and related names are trademarks of
