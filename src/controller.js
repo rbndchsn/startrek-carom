@@ -252,7 +252,7 @@ export class Game {
       lines: [
         humanFirst ? 'The coin landed with the <b>Starfleet emblem</b> face up.' : 'The coin landed with the <b>Nausicaan glyph</b> face up.',
         `Your terik is <span class="c-human">green</span>. ${this.oppName}'s is <span class="c-computer">blue</span>.
-         Light bumpers in your color, open the hole, then bounce your terik off one of your bumpers into the hole.`,
+         Light bumpers in your color to open the hole, then sink your terik in it.`,
       ],
       mood: humanFirst ? 'good' : 'computer',
       button: 'Start',
@@ -375,7 +375,7 @@ export class Game {
           title: `Hole open for ${this.oppName}`,
           lines: [
             `All 10 bumpers are lit. ${this.oppName} owns ${owned} of them, including the gate bumper beside the hole, so the hole in the center now glows blue.`,
-            `It can now win by bouncing its blue terik off one of its lit bumpers into the hole.`,
+            `It can now win by sinking its blue terik in the hole.`,
             out.type === 'continue'
               ? `It lit a bumper on that shot, so it shoots again now.`
               : `Your turn: steal back the gate bumper, or enough bumpers that it owns fewer than 6, to close the hole.`,
@@ -401,21 +401,6 @@ export class Game {
           `${this.oppName} loses ${lost ? bumpersText(lost) : 'nothing (it had no bumpers lit)'} and pays you ${paid} latinum.`,
           '<b>Your bumpers are safe.</b> The ball goes back to its start spot, and it is your turn.'];
       await this.ui.eventCard({ title: mine ? 'Scratch!' : `Scratch by ${this.oppName}`, lines, mood: mine ? 'bad' : 'good' });
-      this.beginTurn(out.next);
-      return;
-    }
-    if (out.type === 'noBumperFirst') {
-      this.respotDropped(t);
-      const mine = shooter === HUMAN;
-      await this.ui.eventCard({
-        title: 'No bumper first',
-        lines: [
-          `${mine ? 'Your' : `${this.oppName}'s`} terik dropped into the open hole without touching a bumper first, so it does not win.`,
-          'To win, the terik must bounce off one of its own lit bumpers on the way in.',
-          `It goes back to its start spot. No penalty. The turn passes to ${mine ? this.oppName : 'you'}.`,
-        ],
-        mood: mine ? 'bad' : 'good',
-      });
       this.beginTurn(out.next);
       return;
     }
@@ -468,14 +453,14 @@ export class Game {
   // How the round was won, for the result card.
   describeWin(winner) {
     const t = this.tracker;
-    const bumper = t && t.lastTerikBumper !== null ? this.describeBumper(t.lastTerikBumper) : 'a lit bumper';
+    const via = t && t.lastTerikBumper !== null ? ` off ${this.describeBumper(t.lastTerikBumper)}` : '';
     const owned = countOwned(this.bumpers, winner);
     const lines = [];
     if (winner === HUMAN) {
-      lines.push(`Your green terik bounced off ${bumper} and dropped into the open hole.`);
+      lines.push(`Your green terik rolled${via} into the open hole.`);
       lines.push(`You owned ${owned} of the 10 bumpers, including the gate bumper.`);
     } else {
-      lines.push(`${this.oppName}'s blue terik bounced off ${bumper} and dropped into the open hole.`);
+      lines.push(`${this.oppName}'s blue terik rolled${via} into the open hole.`);
       lines.push(`${this.oppName} owned ${owned} of the 10 bumpers, including the gate bumper.`);
     }
     return lines;
@@ -677,7 +662,7 @@ export class Game {
       if (announce && holeFor) {
         this.sound.holeOpen();
         if (holeFor === HUMAN) {
-          this.ui.announce('HOLE OPEN', 'The hole in the center of the table now glows green: it is open for you. Bounce your terik off one of your lit bumpers into it to win.', 'good', 3000);
+          this.ui.announce('HOLE OPEN', 'The hole in the center of the table now glows green: it is open for you. Sink your terik in it to win.', 'good', 3000);
         } else {
           // Shown as a card once the balls stop, before the computer can shoot again.
           this.pendingHoleCard = true;

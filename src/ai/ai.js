@@ -71,7 +71,6 @@ function scoreOutcome(t, outcome, w, bs, shooter, ctx) {
   s += t.lit * 12 + t.stolen * 18;
   if (t.gateTaken) s += 30;
   if (isHoleOpen(bs, shooter)) s += 120;
-  if (outcome.type === 'noBumperFirst') s -= 60;
   if (outcome.type === 'continue') s += 10;
   if (ctx.defense && outcome.type !== 'continue') {
     // Penalize leaving the opponent close to opening the hole.

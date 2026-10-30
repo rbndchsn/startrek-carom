@@ -143,9 +143,8 @@ export function createUI(root, h) {
         Your turn continues as long as each shot lights or steals at least one bumper.</p>
         <h3>The hole</h3>
         <p>The hole opens for you when <b>all 10 bumpers are lit</b>, you own <b>at least 6</b>, and you own the
-        <b>gate bumper</b> beside the hole. The hole in the center then glows in your color. Then bounce your terik off one of your lit
-        bumpers into the hole to win. Call it: <b>Dom-jot!</b></p>
-        <p>If your terik drops into your open hole without touching a bumper first, it goes back to its start spot and your turn ends.</p>
+        <b>gate bumper</b> beside the hole. The hole in the center then glows in your color.
+        Sink your terik in the open hole to win. Call it: <b>Dom-jot!</b></p>
         <h3>Scratch</h3>
         <p>Any other ball in the hole is a scratch. Only the shooter pays for it: <b>the shooter's own bumpers go dark</b>,
         the shooter pays ${MONEY.scratchPenalty} latinum to the opponent, and the turn passes. The opponent keeps their bumpers.</p>

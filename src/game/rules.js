@@ -45,7 +45,6 @@ export function createShotTracker(bumpers, shooter) {
     win: false,
     scratch: false,
     scratchLost: 0,
-    noBumperFirst: false,
     dropped: [],
   };
 }
@@ -67,17 +66,14 @@ export function onBumperHit(t, ballId, index) {
   return { index, from, to: t.shooter };
 }
 
-// Sections 5 and 6. Returns 'win', 'noBumperFirst', 'scratch' or 'ignored'.
+// Sections 5 and 6. Returns 'win', 'scratch' or 'ignored'.
 export function onDrop(t, ballId) {
   if (t.win) return 'ignored';
   t.dropped.push(ballId);
+  // With the hole open for the shooter, sinking their own terik wins. No bumper is needed first.
   if (ballId === terikId(t.shooter) && !t.scratch && isHoleOpen(t.bumpers, t.shooter)) {
-    if (t.terikTouchedBumper) {
-      t.win = true;
-      return 'win';
-    }
-    t.noBumperFirst = true;
-    return 'noBumperFirst';
+    t.win = true;
+    return 'win';
   }
   if (!t.scratch) {
     // A scratch costs only the shooter: their own bumpers go dark. The opponent keeps theirs.
@@ -91,11 +87,10 @@ export function onDrop(t, ballId) {
 }
 
 // After all balls stop. Returns { type, next } where type is one of
-// 'win', 'scratch', 'noBumperFirst', 'continue', 'pass'.
+// 'win', 'scratch', 'continue', 'pass'.
 export function finishShot(t) {
   if (t.win) return { type: 'win', next: null };
   if (t.scratch) return { type: 'scratch', next: other(t.shooter) };
-  if (t.noBumperFirst) return { type: 'noBumperFirst', next: other(t.shooter) };
   if (t.changed > 0) return { type: 'continue', next: t.shooter };
   return { type: 'pass', next: other(t.shooter) };
 }

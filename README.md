@@ -24,7 +24,7 @@ Your latinum bank lasts until you close the browser.
 - When your terik hits a bumper, it lights in your color. Hitting your opponent's lit bumper steals it.
   Obstacle balls never light or steal bumpers.
 - The hole opens for you when all 10 bumpers are lit, you own at least 6, and you own the gate
-  bumper beside the hole. Bank your terik off one of your lit bumpers into the hole to win.
+  bumper beside the hole. Then sink your terik in the hole to win.
 - Any ball dropping in the hole too early is a **scratch**. The shooter's own bumpers go dark and the
   shooter pays a penalty. The opponent keeps their bumpers.
 - Each player starts with 500 latinum. A round costs 100, and **Raise +50** ups the stakes.
