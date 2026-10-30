@@ -148,6 +148,8 @@ export class Game {
   handleEvent(e) {
     const t = this.tracker;
     if (e.type === 'bumper') {
+      // Any terik hitting a bumper sets off a short color burst on it.
+      if (e.ballId.startsWith('terik-')) this.table.flashBumper(e.bumperIndex);
       const change = onBumperHit(t, e.ballId, e.bumperIndex);
       this.sound.bumper(!!change, t.shooter);
       if (change) {
@@ -446,7 +448,7 @@ export class Game {
     const pot = awardPot(this.session, this.roundMoney, winner);
     const bonus = isStraightNines(this.ownedAtTurnStart) ? payStraightNines(this.session, winner) : 0;
     this.updateMoney();
-    await delay(1500); // let the light show play before the card
+    await delay(3000); // let the light show and jingle play before the card
     this.finishRound({ winner, reason: 'win', pot, bonus, how: this.describeWin(winner) });
   }
 

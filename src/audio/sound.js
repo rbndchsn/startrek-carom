@@ -122,9 +122,10 @@ export function createSound({ musicOn = true } = {}) {
     coinLand() { tone({ freq: 3100, dur: 0.4, vol: 0.12, type: 'triangle' }); },
     raise() { tone({ freq: 880, dur: 0.1, vol: 0.18 }); tone({ freq: 1320, dur: 0.12, vol: 0.15, delay: 0.08 }); },
     holeOpen() { [523, 659, 784].forEach((f, i) => tone({ freq: f, dur: 0.3, vol: 0.18, delay: i * 0.09 })); },
+    // About two seconds: the same tune at half speed with longer notes.
     win() {
-      [523, 659, 784, 1046, 784, 1046].forEach((f, i) => tone({ freq: f, dur: 0.28, vol: 0.22, delay: i * 0.12, type: 'square' }));
+      [523, 659, 784, 1046, 784, 1046].forEach((f, i) => tone({ freq: f, dur: 0.56, vol: 0.22, delay: i * 0.24, type: 'square' }));
     },
-    lose() { [392, 330, 262].forEach((f, i) => tone({ freq: f, dur: 0.35, vol: 0.2, delay: i * 0.18, type: 'triangle' })); },
+    lose() { [392, 330, 262].forEach((f, i) => tone({ freq: f, dur: 0.7, vol: 0.2, delay: i * 0.36, type: 'triangle' })); },
   };
 }

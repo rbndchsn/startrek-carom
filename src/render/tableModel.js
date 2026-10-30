@@ -265,10 +265,12 @@ export function createTable(scene) {
     for (const m of [pedestal, base, rim]) { m.castShadow = true; m.receiveShadow = true; }
     g.add(pedestal, base, rim, dome, glow, light, halo);
     group.add(g);
-    return { group: g, leds, light, halo, rimMat, domeMat, glow, owner: null, flash: 0 };
+    return { group: g, leds, light, halo, rimMat, domeMat, glow, owner: null, flash: 0, burst: 0, burstT: 0 };
   });
 
   let showTime = -1;
+  // The celebration colors, used by the win light show and by the short burst on each hit.
+  const PALETTE = [COLORS.human, COLORS.computer, COLORS.amber, 0xff4a3a, 0xffffff];
   let hexOwner = null;
 
   function applyBumper(bp, color, on, intensity = 1) {
@@ -327,6 +329,14 @@ export function createTable(scene) {
 
     startLightShow() { showTime = 0; },
 
+    // A short multi-color burst on one bumper when a terik hits it. It then settles back to the
+    // bumper's own color, with the usual glow pulse if the bumper is lit.
+    flashBumper(i, duration = 0.55) {
+      const bp = bumpers[i];
+      bp.burst = duration;
+      bp.burstT = (i * 0.07) % 0.3; // start each bumper at a different color
+    },
+
     stopLightShow() {
       showTime = -1;
       bumpers.forEach((bp) => applyBumper(bp, ownerColor(bp.owner), !!bp.owner));
@@ -335,14 +345,26 @@ export function createTable(scene) {
     update(dt, time) {
       if (showTime >= 0) {
         showTime += dt;
-        const palette = [COLORS.human, COLORS.computer, COLORS.amber, 0xff4a3a, 0xffffff];
         bumpers.forEach((bp, i) => {
-          const c = palette[(Math.floor(showTime * 9) + i) % palette.length];
+          bp.burst = 0;
+          const c = PALETTE[(Math.floor(showTime * 9) + i) % PALETTE.length];
           applyBumper(bp, c, true, 0.8 + 0.4 * Math.sin(showTime * 20 + i));
         });
         return;
       }
       for (const bp of bumpers) {
+        if (bp.burst > 0) {
+          bp.burst -= dt;
+          bp.burstT += dt;
+          if (bp.burst > 0) {
+            const c = PALETTE[Math.floor(bp.burstT * 16) % PALETTE.length];
+            applyBumper(bp, c, true, 1.3 + 0.4 * Math.sin(bp.burstT * 40));
+            continue;
+          }
+          // Burst over: settle to the bumper's own color with a fading glow.
+          bp.flash = bp.owner ? 1 : 0;
+          applyBumper(bp, ownerColor(bp.owner), !!bp.owner, bp.owner ? 2.5 : 1);
+        }
         if (bp.flash > 0) {
           bp.flash = Math.max(0, bp.flash - dt * 2.5);
           applyBumper(bp, ownerColor(bp.owner), !!bp.owner, 1 + bp.flash * 1.5);

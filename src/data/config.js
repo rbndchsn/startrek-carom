@@ -2,7 +2,7 @@
 
 // Bump this and version.json together on every release. A browser holding an older copy
 // notices the difference on load and refreshes itself (see src/update.js).
-export const VERSION = '1.7.0';
+export const VERSION = '1.8.0';
 
 export const HUMAN = 'human';
 export const COMPUTER = 'computer';
